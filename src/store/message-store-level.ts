@@ -22,6 +22,7 @@ export class MessageStoreLevel implements MessageStore {
   // a level-backed inverted index
   // TODO: search-index lib does not import type `SearchIndex`. find a workaround
   index;
+  searchIndexWasOpened: boolean;
 
   /**
    * @param {MessageStoreLevelConfig} config
@@ -38,6 +39,7 @@ export class MessageStoreLevel implements MessageStore {
     };
 
     this.db = new BlockstoreLevel(this.config.blockstoreLocation);
+    this.searchIndexWasOpened = false;
   }
 
   async open(): Promise<void> {
@@ -45,10 +47,9 @@ export class MessageStoreLevel implements MessageStore {
 
     // TODO: look into using the same level we're using for blockstore
     // TODO: parameterize `name`
-    // calling `searchIndex` twice causes the process to hang, so check to see if the index
-    // has already been "opened" before opening it again.
     if (!this.index) {
-      this.index = await searchIndex({ name: this.config.indexLocation });
+      this.index = this.searchIndexWasOpened ? this.index : await searchIndex({ name: this.config.indexLocation });
+      this.searchIndexWasOpened = true;
     }
   }
 
